@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -6,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from weather_app import crud, schemas
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARN)
 router = APIRouter()
 
 
@@ -25,6 +28,7 @@ async def read_cities(db: AsyncSession = Depends(get_db)):
 async def read_city(city_id: int, db: AsyncSession = Depends(get_db)):
     db_city = await crud.get_city(db, city_id=city_id)
     if db_city is None:
+        logger.warning(f"City {city_id} not found")
         raise HTTPException(status_code=404, detail="City not found")
     return db_city
 
@@ -35,6 +39,7 @@ async def update_city(
 ):
     db_city = await crud.update_city(db, city_id=city_id, city=city)
     if db_city is None:
+        logger.warning(f"City {city_id} not found")
         raise HTTPException(status_code=404, detail="City not found")
     return db_city
 
@@ -43,5 +48,6 @@ async def update_city(
 async def delete_city(city_id: int, db: AsyncSession = Depends(get_db)):
     db_city = await crud.delete_city(db, city_id=city_id)
     if db_city is None:
+        logger.warning(f"City {city_id} not found")
         raise HTTPException(status_code=404, detail="City not found")
     return db_city

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 from typing import Dict, Any, Callable, Sequence
 
@@ -11,6 +12,9 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from database import SessionLocal, get_db
 from weather_app import crud, schemas, models
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARN)
+
 router = APIRouter()
 
 WEATHER_API_KEY = config("WEATHER_API_KEY", default=None)
@@ -18,7 +22,11 @@ WEATHER_API_URL = config("WEATHER_API_URL",
                          default="http://api.weatherapi.com/v1/current.json")
 
 if WEATHER_API_KEY is None or WEATHER_API_URL is None:
-    raise ValueError("WEATHER_API_KEY and WEATHER_API_URL must be set")
+    logger.error("WEATHER_API_KEY must be set in the .env file")
+    raise ValueError("WEATHER_API_KEY must be set")
+if WEATHER_API_URL is None:
+    logger.error("WEATHER_API_URL must be set in the .env file")
+    raise ValueError("WEATHER_API_URL must be set")
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
@@ -74,6 +82,7 @@ async def read_temperatures(
 ) -> Sequence[schemas.Temperature]:
     temperatures = await crud.get_temperatures(db)
     if not temperatures:
+        logger.warning("No temperatures found")
         raise HTTPException(status_code=404, detail="No temperatures found")
     return temperatures
 
@@ -86,6 +95,7 @@ async def read_temperature_by_city_id(
 ) -> Sequence[schemas.Temperature]:
     temperatures = await crud.get_temperatures(db, city_id)
     if not temperatures:
+        logger.warning(f"No temperatures found for city ID {city_id}")
         raise HTTPException(
             status_code=404,
             detail=f"No temperatures found for city ID {city_id}",
