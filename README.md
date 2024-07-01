@@ -11,7 +11,7 @@ This is the Temperature Management API. This project provides necessary set of e
 - Swagger documentation.
 - API Pagination.
 
-## Instalation (Local)
+## Installation (Local)
 
 
 1. **Clone the repository**
